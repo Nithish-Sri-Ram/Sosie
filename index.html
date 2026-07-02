@@ -3,16 +3,22 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Sosie - Talk to Elon</title>
+<title>Sosie - Talk to Elon (v4 live avatar)</title>
 <style>
   :root { color-scheme: dark; }
   body { font-family: system-ui, sans-serif; background: #0b0e14; color: #e6e6e6;
          max-width: 640px; margin: 0 auto; padding: 32px 16px 120px; }
   header { display: flex; flex-direction: column; align-items: center; gap: 12px; }
-  #avatar { width: 132px; height: 132px; border-radius: 50%; object-fit: cover;
-            border: 3px solid #333; transition: box-shadow .2s, border-color .2s; }
-  #avatar.listening { border-color: #d33; box-shadow: 0 0 0 6px rgba(221,51,51,.25); }
-  #avatar.speaking  { border-color: #3a7afe; animation: pulse 1.1s ease-in-out infinite; }
+  #face { position: relative; width: 200px; height: 200px; border-radius: 24px;
+          border: 3px solid #333; overflow: hidden;
+          transition: box-shadow .2s, border-color .2s, width .3s, height .3s; }
+  #avatar, #avatarvid { position: absolute; inset: 0; width: 100%; height: 100%;
+                        object-fit: cover; }
+  #avatarvid { display: none; }
+  #face.video #avatarvid { display: block; }
+  #face.listening { border-color: #d33; box-shadow: 0 0 0 6px rgba(221,51,51,.25); }
+  #face.speaking  { width: 300px; height: 300px; border-color: #3a7afe;
+                    animation: pulse 1.1s ease-in-out infinite; }
   @keyframes pulse {
     0%,100% { box-shadow: 0 0 0 4px rgba(58,122,254,.35); }
     50%     { box-shadow: 0 0 0 12px rgba(58,122,254,.12); }
@@ -36,7 +42,10 @@
 </head>
 <body>
   <header>
-    <img id="avatar" src="assets/Elon_Musk.jpg" alt="Elon Musk" />
+    <div id="face">
+      <img id="avatar" src="assets/Elon_Musk.jpg" alt="Elon Musk" />
+      <video id="avatarvid" playsinline></video>
+    </div>
     <h1>Talk to Elon</h1>
     <div id="status">Press the button, then just talk - Elon answers when you pause</div>
   </header>
@@ -50,33 +59,58 @@
   //  - JarvisLabs-style port proxy /proxy/8000 -> sibling /proxy/<port> paths
   // Override via ?stt=..&llm=..&tts=.. if needed.
   const q = new URLSearchParams(location.search);
-  let sttDef, llmDef, ttsDef;
+  let sttDef, llmDef, ttsDef, vidDef;
   if (location.pathname.match(/^\/proxy\/\d+\//)) {
     sttDef = location.origin + "/proxy/5001";
     llmDef = "/proxy/5004";
     ttsDef = "/proxy/5002";
+    vidDef = "/proxy/5003";
   } else if (location.port === "8000") {
     sttDef = "http://localhost:5001";
     llmDef = "http://localhost:5004";
     ttsDef = "http://localhost:5002";
+    vidDef = "http://localhost:5003";
   } else {
     sttDef = location.origin + "/stt";
     llmDef = "/llm";
     ttsDef = "/tts";
+    vidDef = "/vid";
   }
   const STT_WS = (q.get("stt") || sttDef).replace(/^http/, "ws");
   const LLM = q.get("llm") || llmDef;
   const TTS = q.get("tts") || ttsDef;
+  const VID = q.get("vid") || vidDef;
 
   const btn = document.getElementById("talk");
   const statusEl = document.getElementById("status");
   const log = document.getElementById("log");
-  const avatar = document.getElementById("avatar");
+  const face = document.getElementById("face");
+  const vid = document.getElementById("avatarvid");
 
   let audioCtx, processor, source, stream, socket;
   let running = false;   // conversation on/off
   let muted = false;     // true while Elon thinks/speaks (mic frames dropped)
   let transcript = "", liveEl = null;
+  let idleURL = null;    // pre-rendered silent loop: Elon looks alive between turns
+
+  async function loadIdle() {
+    try {
+      const r = await fetch(VID + "/idle");
+      if (!r.ok) return;
+      idleURL = URL.createObjectURL(await r.blob());
+      playIdle();
+    } catch (e) { /* vid_gen down - keep the photo */ }
+  }
+
+  function playIdle() {
+    if (!idleURL) return;
+    vid.onended = null; vid.onerror = null; vid.onplay = null;
+    vid.src = idleURL;
+    vid.loop = true;
+    vid.muted = true;
+    vid.play().then(() => face.classList.add("video")).catch(() => {});
+  }
+  loadIdle();
 
   function line(cls, text) {
     const d = document.createElement("div");
@@ -127,7 +161,7 @@
 
   function listening() {
     muted = false;
-    avatar.classList.add("listening");
+    face.classList.add("listening");
     statusEl.textContent = "Listening... just talk, pause when done";
   }
 
@@ -183,7 +217,8 @@
     muted = true;
     btn.textContent = "Start conversation";
     btn.classList.remove("rec");
-    avatar.classList.remove("listening", "speaking");
+    face.classList.remove("listening", "speaking");
+    playIdle();
     statusEl.textContent = "Press the button, then just talk - Elon answers when you pause";
     if (processor) processor.disconnect();
     if (source) source.disconnect();
@@ -198,7 +233,7 @@
   async function turnEnd() {
     if (!running) return;
     muted = true;                       // don't let Elon hear himself
-    avatar.classList.remove("listening");
+    face.classList.remove("listening");
     const userText = transcript.trim();
     transcript = "";
     if (liveEl) { liveEl.classList.remove("live"); liveEl.textContent = userText || "(unclear)"; }
@@ -217,16 +252,114 @@
         body: JSON.stringify({ text: answer }),
       });
       if (!r.ok) throw new Error("TTS " + r.status);
-      const audio = new Audio(URL.createObjectURL(await r.blob()));
-      audio.onplay = () => { avatar.classList.add("speaking"); statusEl.textContent = "Speaking..."; };
-      audio.onended = () => {
-        avatar.classList.remove("speaking");
-        if (running) listening();
-      };
-      await audio.play();
+      const wav = await r.blob();
+      if (!running) return;
+      if (await speakVideo(wav)) return;   // lip-synced video (MuseTalk)
+      await speakAudio(wav);               // fallback: voice only
     } catch (e) {
-      avatar.classList.remove("speaking");
       statusEl.textContent = "TTS error: " + e.message;
+      if (running) listening();
+    }
+  }
+
+  // MuseTalk lip-sync. Preferred path: fragmented mp4 streamed while frames
+  // are generated, played live via MediaSource. Falls back to whole-file mp4,
+  // and returns false if vid_gen is down so the caller can go voice-only.
+  const MSE_CODEC = 'video/mp4; codecs="avc1.42E01F, mp4a.40.2"';
+
+  async function speakVideo(wav) {
+    if (window.MediaSource && MediaSource.isTypeSupported(MSE_CODEC)) {
+      if (await speakVideoStream(wav)) return true;
+    }
+    return await speakVideoBlob(wav);
+  }
+
+  function videoDone(resolve, ok) {
+    face.classList.remove("speaking");
+    playIdle();                      // back to the living idle loop
+    if (running) listening();
+    resolve(ok);
+  }
+
+  async function speakVideoStream(wav) {
+    try {
+      statusEl.textContent = "Rendering video...";
+      const r = await fetch(VID + "/generate_stream", {
+        method: "POST", headers: { "Content-Type": "audio/wav" }, body: wav,
+      });
+      if (!r.ok || !r.body) return false;
+      const reader = r.body.getReader();
+      const ms = new MediaSource();
+      vid.loop = false;
+      vid.muted = false;
+      vid.src = URL.createObjectURL(ms);
+      await new Promise((res) => ms.addEventListener("sourceopen", res, { once: true }));
+      const sb = ms.addSourceBuffer(MSE_CODEC);
+      const idle = () => new Promise((res) => {
+        if (!sb.updating) return res();
+        sb.addEventListener("updateend", res, { once: true });
+      });
+      let started = false;
+      return await new Promise(async (resolve) => {
+        vid.onended = () => videoDone(resolve, true);
+        vid.onerror = () => { if (!started) resolve(false); else videoDone(resolve, true); };
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            await idle();
+            sb.appendBuffer(value);
+            if (!started) {
+              started = true;
+              vid.play().then(() => {
+                face.classList.add("video", "speaking");
+                statusEl.textContent = "Speaking... (live)";
+              }).catch(() => resolve(false));
+            }
+          }
+          await idle();
+          if (ms.readyState === "open") ms.endOfStream();
+          if (!started) resolve(false);   // stream ended before anything played
+        } catch (e) {
+          if (!started) resolve(false); else videoDone(resolve, true);
+        }
+      });
+    } catch (e) { return false; }
+  }
+
+  async function speakVideoBlob(wav) {
+    try {
+      statusEl.textContent = "Rendering video...";
+      const r = await fetch(VID + "/generate", {
+        method: "POST", headers: { "Content-Type": "audio/wav" }, body: wav,
+      });
+      if (!r.ok) return false;
+      const mp4 = await r.blob();
+      if (!running) return true;
+      return await new Promise((resolve) => {
+        vid.loop = false;
+        vid.muted = false;
+        vid.src = URL.createObjectURL(mp4);
+        vid.onplay = () => { face.classList.add("video", "speaking"); statusEl.textContent = "Speaking..."; };
+        vid.onended = () => videoDone(resolve, true);
+        vid.onerror = () => { face.classList.remove("speaking"); playIdle(); resolve(false); };
+        vid.play().catch(() => { playIdle(); resolve(false); });
+      });
+    } catch (e) { return false; }
+  }
+
+  async function speakAudio(wav) {
+    const audio = new Audio(URL.createObjectURL(wav));
+    audio.onplay = () => { face.classList.add("speaking"); statusEl.textContent = "Speaking..."; };
+    audio.onended = () => {
+      face.classList.remove("speaking");
+      playIdle();
+      if (running) listening();
+    };
+    try { await audio.play(); }
+    catch (e) {
+      face.classList.remove("speaking");
+      playIdle();
       if (running) listening();
     }
   }
