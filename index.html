@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sosie — Voice</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 640px; margin: 40px auto; padding: 0 16px; }
+  h1 { font-size: 20px; }
+  #talk { padding: 14px 28px; font-size: 16px; border: 0; border-radius: 999px;
+          background: #111; color: #fff; cursor: pointer; }
+  #talk.rec { background: #d33; }
+  #status { color: #888; margin: 12px 0; min-height: 20px; }
+  .line { margin: 8px 0; padding: 10px 14px; border-radius: 10px; }
+  .you { background: #eef; }
+  .you.live { opacity: .6; }
+  .sosie { background: #efe; }
+  #log { margin-top: 16px; }
+</style>
+</head>
+<body>
+  <h1>Sosie — listen &amp; respond</h1>
+  <button id="talk">Start talking</button>
+  <div id="status">Idle</div>
+  <div id="log"></div>
+
+<script>
+  // Backends (each its own venv/port). Override via ?stt=..&llm=..&tts=.. if needed.
+  const q = new URLSearchParams(location.search);
+  const STT_WS = (q.get("stt") || "http://localhost:5001").replace(/^http/, "ws");
+  const LLM = q.get("llm") || "http://localhost:5004";
+  const TTS = q.get("tts") || "http://localhost:5002";
+
+  const btn = document.getElementById("talk");
+  const statusEl = document.getElementById("status");
+  const log = document.getElementById("log");
+
+  let audioCtx, processor, source, stream, socket;
+  let recording = false, transcript = "", liveEl = null;
+
+  function line(cls, text) {
+    const d = document.createElement("div");
+    d.className = "line " + cls;
+    d.textContent = text;
+    log.appendChild(d);
+    return d;
+  }
+
+  // Groq LLM (server-side proxy holds the key). Falls back to echo if offline.
+  async function reply(userText) {
+    if (!userText) return "I didn't catch that — could you say that again?";
+    try {
+      const r = await fetch(LLM + "/chat", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: userText }),
+      });
+      return (await r.json()).reply || "…";
+    } catch (e) { return "You said: " + userText; }  // LLM offline — echo
+  }
+
+  // --- audio helpers (mic -> 16kHz Int16 PCM) ---
+  function toPCM16(f32) {
+    const out = new Int16Array(f32.length);
+    for (let i = 0; i < f32.length; i++) {
+      const s = Math.max(-1, Math.min(1, f32[i]));
+      out[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+    }
+    return out;
+  }
+  function downsample(buf, inRate, outRate) {
+    if (outRate === inRate) return buf;
+    const ratio = inRate / outRate, len = Math.round(buf.length / ratio);
+    const res = new Float32Array(len);
+    let o = 0, b = 0;
+    while (o < len) {
+      const next = Math.round((o + 1) * ratio);
+      let acc = 0, c = 0;
+      for (let i = b; i < next && i < buf.length; i++) { acc += buf[i]; c++; }
+      res[o++] = acc / (c || 1);
+      b = next;
+    }
+    return res;
+  }
+
+  btn.onclick = () => { recording ? stop() : start(); };
+
+  async function start() {
+    transcript = "";
+    liveEl = line("you live", "You: …");
+    stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioCtx = new AudioContext();
+    socket = new WebSocket(STT_WS + "/ws");
+    socket.binaryType = "arraybuffer";
+
+    socket.onmessage = (e) => {
+      if (e.data === "[[END]]") { finalize(); return; }
+      transcript += e.data + " ";
+      liveEl.textContent = "You: " + transcript.trim();
+    };
+
+    socket.onopen = () => {
+      source = audioCtx.createMediaStreamSource(stream);
+      processor = audioCtx.createScriptProcessor(4096, 1, 1);
+      processor.onaudioprocess = (e) => {
+        if (socket.readyState !== WebSocket.OPEN) return;
+        const pcm = toPCM16(downsample(e.inputBuffer.getChannelData(0), audioCtx.sampleRate, 16000));
+        socket.send(pcm.buffer);
+      };
+      source.connect(processor);
+      processor.connect(audioCtx.destination);  // silent (no output written)
+      recording = true;
+      btn.textContent = "Stop";
+      btn.classList.add("rec");
+      statusEl.textContent = "Listening…";
+    };
+  }
+
+  function stop() {
+    recording = false;
+    btn.textContent = "Start talking";
+    btn.classList.remove("rec");
+    statusEl.textContent = "Transcribing…";
+    if (processor) processor.disconnect();
+    if (source) source.disconnect();
+    if (audioCtx) audioCtx.close();
+    if (stream) stream.getTracks().forEach(t => t.stop());
+    if (socket && socket.readyState === WebSocket.OPEN) socket.send("eof");  // flush; wait for [[END]]
+  }
+
+  // called when the server signals the final transcript is in
+  async function finalize() {
+    if (socket) socket.close();
+    if (liveEl) liveEl.classList.remove("live");
+    const userText = transcript.trim();
+    if (liveEl) liveEl.textContent = "You: " + (userText || "(silence)");
+
+    statusEl.textContent = "Thinking…";
+    const answer = await reply(userText);
+    line("sosie", "Sosie: " + answer);
+
+    statusEl.textContent = "Speaking…";
+    try {
+      const r = await fetch(TTS + "/tts", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: answer }),
+      });
+      const audio = new Audio(URL.createObjectURL(await r.blob()));
+      audio.onended = () => statusEl.textContent = "Idle";
+      audio.play();
+    } catch (e) { statusEl.textContent = "TTS error: " + e; }
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+# Sosie vid_gen (MuseTalk). CUDA / NVIDIA only — does NOT run on Apple MPS.
+# Install torch matching your CUDA build first, e.g.:
+#   pip install torch==2.2.0 torchvision==0.17.0 torchaudio==2.2.0 --index-url https://download.pytorch.org/whl/cu121
+# Then these, then MuseTalk's own requirements.txt inside the cloned repo.
+# NOTE: DWPose needs OpenMMLab (mmengine / mmcv / mmdet / mmpose) — install per
+# MuseTalk README; they are version-sensitive and not listed here on purpose.
+flask
+flask-cors
+python-dotenv
+diffusers
+accelerate
+transformers
+opencv-python
+imageio
+imageio-ffmpeg
+ffmpeg-python
+librosa
+soundfile
+einops
+omegaconf
+numpy
+scipy
+gdown
