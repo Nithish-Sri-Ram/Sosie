@@ -1,0 +1,37 @@
+# HTTPS reverse proxy - one origin for the UI + all three backends.
+# Mic access (getUserMedia) needs a secure origin, so the proxy serves HTTPS
+# with a self-signed cert (browser will warn once - click through).
+#
+#   https://<public-ip>:8443        -> UI (static files from this repo)
+#   https://<public-ip>:8443/stt/*  -> STT  :5001 (incl. the /ws websocket)
+#   https://<public-ip>:8443/llm/*  -> LLM  :5004
+#   https://<public-ip>:8443/tts/*  -> TTS  :5002
+#
+# Run: caddy run --config Caddyfile   (run_all.sh does this for you)
+
+{
+	auto_https disable_redirects
+	servers {
+		# h1 only: Chrome tunnels WebSockets over h2/h3 when offered, and the
+		# proxied frames arrive type-corrupted (text frames become binary).
+		protocols h1
+	}
+}
+
+https://:8443 {
+	tls certs/cert.pem certs/key.pem
+
+	handle_path /stt/* {
+		reverse_proxy 127.0.0.1:5001
+	}
+	handle_path /llm/* {
+		reverse_proxy 127.0.0.1:5004
+	}
+	handle_path /tts/* {
+		reverse_proxy 127.0.0.1:5002
+	}
+	handle {
+		root * .
+		file_server
+	}
+}

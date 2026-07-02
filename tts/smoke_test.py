@@ -1,4 +1,4 @@
-"""TTS smoke test — text -> out.wav directly, no server, no browser.
+"""TTS smoke test - text -> out.wav directly, no server, no browser.
 
     python smoke_test.py "Hello from Sosie."
 
@@ -17,8 +17,12 @@ sys.path.insert(
 
 import torch
 import torchaudio
+from dotenv import load_dotenv
 from cosyvoice.cli.cosyvoice import CosyVoice2
-from cosyvoice.utils.file_utils import load_wav
+
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+PROMPT_WAV = os.getenv("PROMPT_WAV", "assets/prompt.wav")
+PROMPT_TEXT = os.getenv("PROMPT_TEXT", "Hello, this is a reference voice sample.")
 
 text = sys.argv[1] if len(sys.argv) > 1 else "Hello, this is Sosie speaking."
 
@@ -27,14 +31,13 @@ cosyvoice = CosyVoice2(
     "CosyVoice/pretrained_models/CosyVoice2-0.5B",
     load_jit=False, load_trt=False, fp16=False,
 )
-prompt_16k = load_wav("assets/prompt.wav", 16000)
 print(f"model loaded in {time.time() - t0:.1f}s")
 
 t0 = time.time()
+# newer CosyVoice API: pass the prompt wav PATH; it loads/resamples internally
 chunks = [o["tts_speech"] for o in
-          cosyvoice.inference_zero_shot(text, "Hello, this is a reference voice sample.",
-                                        prompt_16k, stream=False)]
-audio = torch.cat(chunks, dim=1)
+          cosyvoice.inference_zero_shot(text, PROMPT_TEXT, PROMPT_WAV, stream=False)]
+audio = torch.cat(chunks, dim=1).cpu()
 dur = audio.shape[1] / cosyvoice.sample_rate
 elapsed = time.time() - t0
 torchaudio.save("out.wav", audio, cosyvoice.sample_rate)

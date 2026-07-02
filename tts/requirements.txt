@@ -1,8 +1,8 @@
 # Sosie TTS (CosyVoice2-0.5B). Prefers Apple MPS, falls back to CPU.
 # These cover the inference server. ALSO run, inside the cloned repo:
 #     pip install -r CosyVoice/requirements.txt
-# (that pins the full CosyVoice stack; text-normalization extras — pynini /
-#  WeTextProcessing — are noted in README.md as they need conda/OpenFst.)
+# (that pins the full CosyVoice stack; text-normalization extras - pynini /
+#  WeTextProcessing - are noted in README.md as they need conda/OpenFst.)
 flask
 flask-cors
 python-dotenv

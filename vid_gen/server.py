@@ -1,11 +1,11 @@
-"""Sosie vid_gen — MuseTalk lip-sync over HTTP (GPU / CUDA box only).
+"""Sosie vid_gen - MuseTalk lip-sync over HTTP (GPU / CUDA box only).
 
 POST /generate  (multipart: 'audio' wav + optional 'avatar' id) -> video/mp4
 GET  /health
 Runs on http://localhost:5003
 
 This is a thin wrapper that shells out to MuseTalk's realtime inference script.
-It is NOT runnable on this Mac — MuseTalk needs CUDA (see README.md for the
+It is NOT runnable on this Mac - MuseTalk needs CUDA (see README.md for the
 GPU sizing + weight-download steps). Test tts/ and stt/ locally; run this on
 the GPU box.
 """
@@ -24,7 +24,7 @@ load_dotenv()
 MUSETALK_DIR = os.getenv(
     "MUSETALK_DIR", os.path.join(os.path.dirname(__file__), "MuseTalk")
 )
-# A prepared avatar/config lives under MuseTalk/configs — set per your setup.
+# A prepared avatar/config lives under MuseTalk/configs - set per your setup.
 CONFIG = os.getenv("MUSETALK_CONFIG", "configs/inference/realtime.yaml")
 RESULT_DIR = os.getenv("RESULT_DIR", os.path.join(MUSETALK_DIR, "results"))
 

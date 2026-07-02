@@ -1,4 +1,4 @@
-# TTS — CosyVoice2-0.5B
+# TTS - CosyVoice2-0.5B
 
 Prefers Apple **MPS**, falls back to CPU. Serves `POST /tts {text}` -> wav on **:5002**.
 
@@ -17,7 +17,7 @@ pip install -r CosyVoice/requirements.txt
 python -c "from modelscope import snapshot_download; \
   snapshot_download('iic/CosyVoice2-0.5B', local_dir='CosyVoice/pretrained_models/CosyVoice2-0.5B')"
 
-# 4. Reference voice for zero-shot cloning: a 3–10s clean clip
+# 4. Reference voice for zero-shot cloning: a 3-10s clean clip
 mkdir -p assets && cp /path/to/your_voice.wav assets/prompt.wav
 # set PROMPT_TEXT to the exact words spoken in that clip (default is a placeholder)
 ```

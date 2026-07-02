@@ -1,4 +1,4 @@
-"""Sosie TTS — CosyVoice2-0.5B over HTTP.
+"""Sosie TTS - CosyVoice2-0.5B over HTTP.
 
 POST /tts  {"text": "..."}  -> audio/wav
 GET  /health
@@ -29,10 +29,9 @@ sys.path.insert(0, os.path.join(COSYVOICE_DIR, "third_party", "Matcha-TTS"))
 
 try:
     from cosyvoice.cli.cosyvoice import CosyVoice2       # noqa: E402
-    from cosyvoice.utils.file_utils import load_wav      # noqa: E402
 except ModuleNotFoundError as e:
     raise SystemExit(
-        f"Can't import CosyVoice ({e}). It is NOT a pip package — clone the repo "
+        f"Can't import CosyVoice ({e}). It is NOT a pip package - clone the repo "
         f"into {COSYVOICE_DIR} and install its deps. See tts/SETUP.md:\n"
         "  git clone --recursive https://github.com/FunAudioLLM/CosyVoice.git\n"
         "  pip install -r CosyVoice/requirements.txt"
@@ -52,7 +51,8 @@ CORS(app)
 
 print("Loading CosyVoice2-0.5B...")
 cosyvoice = CosyVoice2(MODEL_DIR, load_jit=False, load_trt=False, fp16=False)
-prompt_16k = load_wav(PROMPT_WAV, 16000)
+if not os.path.exists(PROMPT_WAV):
+    raise SystemExit(f"Reference voice clip not found: {PROMPT_WAV}")
 print("TTS ready.")
 
 
@@ -64,10 +64,10 @@ def tts():
     chunks = [
         out["tts_speech"]
         for out in cosyvoice.inference_zero_shot(
-            text, PROMPT_TEXT, prompt_16k, stream=False
+            text, PROMPT_TEXT, PROMPT_WAV, stream=False
         )
     ]
-    audio = torch.cat(chunks, dim=1)
+    audio = torch.cat(chunks, dim=1).cpu()
     buf = io.BytesIO()
     torchaudio.save(buf, audio, cosyvoice.sample_rate, format="wav")
     buf.seek(0)

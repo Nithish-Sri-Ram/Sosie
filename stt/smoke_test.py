@@ -1,4 +1,4 @@
-"""STT smoke test — transcribe a wav file directly, no server, no browser.
+"""STT smoke test - transcribe a wav file directly, no server, no browser.
 
     python smoke_test.py path/to/audio.wav
 

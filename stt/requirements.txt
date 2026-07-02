@@ -1,5 +1,7 @@
-# Sosie STT (faster-whisper). CPU/int8 on Apple Silicon — no MPS in CTranslate2.
+# Sosie STT (faster-whisper). CPU/int8 on Apple Silicon - no MPS in CTranslate2.
 faster-whisper
+silero-vad
+torch
 flask
 flask-cors
 python-dotenv
