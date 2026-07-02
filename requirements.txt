@@ -1,0 +1,7 @@
+# Sosie root — installs the Mac-testable layers (STT + LLM + TTS) into one venv
+# if you want to run the whole voice loop locally without per-folder envs.
+# vid_gen (MuseTalk) is CUDA-only and intentionally excluded — install it on
+# the GPU box from vid_gen/requirements.txt.
+-r stt/requirements.txt
+-r llm/requirements.txt
+-r tts/requirements.txt

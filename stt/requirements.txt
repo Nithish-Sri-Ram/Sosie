@@ -1,0 +1,8 @@
+# Sosie STT (faster-whisper). CPU/int8 on Apple Silicon — no MPS in CTranslate2.
+faster-whisper
+flask
+flask-cors
+python-dotenv
+# used by the streaming demo micrphone_record.py:
+flask-sock
+numpy

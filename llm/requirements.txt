@@ -1,0 +1,5 @@
+# Sosie LLM (Groq, remote). Light — safe to share a venv with STT/TTS.
+flask
+flask-cors
+groq
+python-dotenv

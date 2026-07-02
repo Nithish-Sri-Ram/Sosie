@@ -1,0 +1,36 @@
+# --- secrets ---
+.env
+.env.*
+!.env.example
+
+# --- python / venvs ---
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+
+# --- cloned upstream repos (huge, install locally per SETUP.md) ---
+tts/CosyVoice/
+vid_gen/MuseTalk/
+
+# --- model weights ---
+**/pretrained_models/
+**/checkpoints/
+**/models/
+*.pt
+*.pth
+*.onnx
+*.safetensors
+
+# --- generated / test artifacts ---
+out.wav
+reply.wav
+*.mp4
+vid_gen/results/
+
+# --- reference audio (may be personal/large) ---
+**/assets/*.wav
+
+# --- os ---
+.DS_Store
