@@ -107,12 +107,16 @@ in `vid_gen/SETUP.md`.
 
 ## Status
 
-- STT + LLM + TTS wired into `index.html` (browser loop works today) -
-  persona: **Elon Musk** (voice cloned from `assets/elon_musk_sample.wav`,
-  persona prompt in `llm/.env`). Verified end-to-end on the A30 GPU box.
-- HTTPS reverse proxy (`Caddyfile`, :8443) so the mic works from any browser.
-- `vid_gen` (MuseTalk) is validated standalone (audio->video) on the GPU box and
-  not yet wired into the browser loop - that's the final GPU-side integration.
+- STT + LLM + TTS + vid_gen wired into `index.html` - persona: **Elon Musk**
+  (voice cloned from `assets/elon_musk_sample.wav`, persona prompt in
+  `llm/.env`). Verified end-to-end on the A30 GPU box.
+- STT does server-side turn detection (Silero VAD): speak, pause, Elon answers.
+- `vid_gen` (MuseTalk V1.5, own venv at `vid_gen/.venv`) lip-syncs the avatar
+  for each reply and streams it as fragmented mp4 while frames are still being
+  generated; the UI plays the stream live via MediaSource (playback starts a
+  few seconds in), falling back to whole-file mp4, then voice-only.
+- HTTPS reverse proxy (`Caddyfile`, :8443) so the mic works from any browser;
+  also reachable via the JarvisLabs port proxy (`/proxy/8000/`).
 
 ---
 *Team-1 - Sosie.*

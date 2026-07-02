@@ -8,9 +8,18 @@ import http.server
 import os
 import socketserver
 
+
+class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
+    """The UI iterates fast - never let browsers serve a stale index.html."""
+
+    def end_headers(self):
+        self.send_header("Cache-Control", "no-cache, must-revalidate")
+        super().end_headers()
+
+
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 PORT = int(os.getenv("PORT", 8000))
 
-with socketserver.TCPServer(("", PORT), http.server.SimpleHTTPRequestHandler) as httpd:
+with socketserver.TCPServer(("", PORT), NoCacheHandler) as httpd:
     print(f"Sosie UI -> http://localhost:{PORT}")
     httpd.serve_forever()

@@ -6,6 +6,7 @@
 #   https://<public-ip>:8443/stt/*  -> STT  :5001 (incl. the /ws websocket)
 #   https://<public-ip>:8443/llm/*  -> LLM  :5004
 #   https://<public-ip>:8443/tts/*  -> TTS  :5002
+#   https://<public-ip>:8443/vid/*  -> vid_gen (MuseTalk) :5003
 #
 # Run: caddy run --config Caddyfile   (run_all.sh does this for you)
 
@@ -30,8 +31,18 @@ https://:8443 {
 	handle_path /tts/* {
 		reverse_proxy 127.0.0.1:5002
 	}
+	handle_path /vid/* {
+		reverse_proxy 127.0.0.1:5003 {
+			# stream the fragmented-mp4 response, don't buffer it
+			flush_interval -1
+			transport http {
+				response_header_timeout 180s
+			}
+		}
+	}
 	handle {
 		root * .
+		header Cache-Control "no-cache, must-revalidate"
 		file_server
 	}
 }

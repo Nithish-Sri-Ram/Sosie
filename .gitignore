@@ -30,6 +30,7 @@ reply.wav
 tts/*.wav
 *.mp4
 vid_gen/results/
+vid_gen/avatar_src/
 
 # --- reference audio (may be personal/large) ---
 # (assets/elon_musk_sample.wav is force-tracked as the demo reference voice)
