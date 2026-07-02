@@ -1,4 +1,4 @@
-"""LLM smoke test — one Groq round-trip, no server, no browser.
+"""LLM smoke test - one Groq round-trip, no server, no browser.
 
     python smoke_test.py "How's the weather on Mars?"
 

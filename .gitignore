@@ -24,13 +24,24 @@ vid_gen/MuseTalk/
 *.safetensors
 
 # --- generated / test artifacts ---
+logs/
 out.wav
 reply.wav
+tts/*.wav
 *.mp4
 vid_gen/results/
 
 # --- reference audio (may be personal/large) ---
+# (assets/elon_musk_sample.wav is force-tracked as the demo reference voice)
 **/assets/*.wav
+
+# --- tls (self-signed, regenerate per box — see Readme) ---
+certs/
 
 # --- os ---
 .DS_Store
+
+# --- claude code session files ---
+.claude/
+CLAUDE.md
+CLAUDE.local.md

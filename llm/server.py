@@ -1,10 +1,10 @@
-"""Sosie LLM — Groq chat over HTTP (streaming API, remote).
+"""Sosie LLM - Groq chat over HTTP (streaming API, remote).
 
 POST /chat  {"text": "..."}  -> {"reply": "..."}
 GET  /health
 Runs on http://localhost:5004
 
-Needs GROQ_API_KEY (see .env.example). Runs on Mac during dev — Groq itself is
+Needs GROQ_API_KEY (see .env.example). Runs on Mac during dev - Groq itself is
 remote, this is just a thin key-holding proxy so the browser never sees the key.
 """
 import os

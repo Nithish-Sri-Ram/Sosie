@@ -1,4 +1,4 @@
-"""MuseTalk smoke test — audio -> lip-synced video, standalone (GPU box).
+"""MuseTalk smoke test - audio -> lip-synced video, standalone (GPU box).
 
     python smoke_test.py path/to/audio.wav
 
