@@ -22,7 +22,6 @@ body{background:#F3EEE6}
 @keyframes softIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
 @keyframes blink{0%,80%,100%{opacity:.22}40%{opacity:1}}
 </style>
-<script src="image-slot.js"></script>
 </helmet>
 <div ref="{{ rootRef }}" data-avatarapp-root="1" style="--bg:#F3EEE6; --bg2:#EBE4D8; --surface:#FBF8F2; --ink:#2C2823; --ink-soft:#6E655B; --ink-faint:#A79D8F; --line:#E4DCCF; --accent:#C1674A; --accent-deep:#A9543B; --end:#B0473A; --panel:#E4DACC; --glow:#F8F4EE; --shadow:0 42px 84px -34px rgba(58,42,28,0.42), 0 14px 34px -16px rgba(58,42,28,0.20); font-family:'Hanken Grotesk',system-ui,sans-serif; color:var(--ink); background:radial-gradient(120% 85% at 50% -8%, var(--glow), var(--bg) 62%); min-height:100vh; width:100%; position:relative; overflow-x:hidden; -webkit-font-smoothing:antialiased;">
 
@@ -45,47 +44,26 @@ body{background:#F3EEE6}
       </div>
 
       <div style="display:flex; gap:22px; flex-wrap:wrap; justify-content:center;">
-        <button onClick="{{ onSel0 }}" style="display:flex; flex-direction:column; gap:15px; width:232px; padding:14px; border-radius:22px; background:var(--surface); border:1px solid var(--line); cursor:pointer; text-align:left; font-family:'Hanken Grotesk',sans-serif; transition:transform .28s cubic-bezier(.2,.8,.2,1), box-shadow .28s; box-shadow:0 10px 26px -18px rgba(60,42,28,.5);" style-hover="transform:translateY(-4px); box-shadow:0 22px 42px -22px rgba(60,42,28,.55)" style-active="transform:translateY(-1px)">
+        <sc-if value="{{ hasPersonas }}" hint-placeholder-val="{{ true }}">
+        <sc-for list="{{ personasView }}" as="persona" hint-placeholder-count="1">
+        <button onClick="{{ persona.onSelect }}" style="display:flex; flex-direction:column; gap:15px; width:232px; padding:14px; border-radius:22px; background:var(--surface); border:1px solid var(--line); cursor:pointer; text-align:left; font-family:'Hanken Grotesk',sans-serif; transition:transform .28s cubic-bezier(.2,.8,.2,1), box-shadow .28s; box-shadow:0 10px 26px -18px rgba(60,42,28,.5);" style-hover="transform:translateY(-4px); box-shadow:0 22px 42px -22px rgba(60,42,28,.55)" style-active="transform:translateY(-1px)">
           <div style="position:relative; width:100%; aspect-ratio:4/5; border-radius:14px; overflow:hidden; background:var(--panel);">
-            <image-slot id="face-maya" shape="rounded" radius="14" placeholder="portrait" style="width:100%; height:100%; display:block;"></image-slot>
-            <div style="{{ ring0Style }}"></div>
-            <sc-if value="{{ sel0 }}"><div style="position:absolute; top:10px; right:10px; width:26px; height:26px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,.25); animation:softIn .25s ease;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"></path></svg></div></sc-if>
+            <img src="{{ persona.avatarUrl }}" style="width:100%; height:100%; object-fit:cover; display:block;" />
+            <div style="{{ persona.ringStyle }}"></div>
+            <sc-if value="{{ persona.selected }}"><div style="position:absolute; top:10px; right:10px; width:26px; height:26px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,.25); animation:softIn .25s ease;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"></path></svg></div></sc-if>
           </div>
           <div style="display:flex; flex-direction:column; gap:5px; padding:0 4px 6px;">
-            <div style="font-family:'Newsreader',serif; font-size:21px; color:var(--ink); line-height:1;">Maya</div>
-            <div style="font-size:10.5px; text-transform:uppercase; letter-spacing:.15em; color:var(--accent); font-weight:600;">Reflective companion</div>
-            <div style="font-size:13.5px; line-height:1.45; color:var(--ink-soft); margin-top:2px;">Think out loud. She listens, and asks the quiet questions.</div>
+            <div style="font-family:'Newsreader',serif; font-size:21px; color:var(--ink); line-height:1;">{{ persona.name }}</div>
           </div>
         </button>
-
-        <button onClick="{{ onSel1 }}" style="display:flex; flex-direction:column; gap:15px; width:232px; padding:14px; border-radius:22px; background:var(--surface); border:1px solid var(--line); cursor:pointer; text-align:left; font-family:'Hanken Grotesk',sans-serif; transition:transform .28s cubic-bezier(.2,.8,.2,1), box-shadow .28s; box-shadow:0 10px 26px -18px rgba(60,42,28,.5);" style-hover="transform:translateY(-4px); box-shadow:0 22px 42px -22px rgba(60,42,28,.55)" style-active="transform:translateY(-1px)">
-          <div style="position:relative; width:100%; aspect-ratio:4/5; border-radius:14px; overflow:hidden; background:var(--panel);">
-            <image-slot id="face-theo" shape="rounded" radius="14" placeholder="portrait" style="width:100%; height:100%; display:block;"></image-slot>
-            <div style="{{ ring1Style }}"></div>
-            <sc-if value="{{ sel1 }}"><div style="position:absolute; top:10px; right:10px; width:26px; height:26px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,.25); animation:softIn .25s ease;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"></path></svg></div></sc-if>
-          </div>
-          <div style="display:flex; flex-direction:column; gap:5px; padding:0 4px 6px;">
-            <div style="font-family:'Newsreader',serif; font-size:21px; color:var(--ink); line-height:1;">Theo</div>
-            <div style="font-size:10.5px; text-transform:uppercase; letter-spacing:.15em; color:var(--accent); font-weight:600;">Language partner</div>
-            <div style="font-size:13.5px; line-height:1.45; color:var(--ink-soft); margin-top:2px;">Practice a new language at a gentle, forgiving pace.</div>
-          </div>
-        </button>
-
-        <button onClick="{{ onSel2 }}" style="display:flex; flex-direction:column; gap:15px; width:232px; padding:14px; border-radius:22px; background:var(--surface); border:1px solid var(--line); cursor:pointer; text-align:left; font-family:'Hanken Grotesk',sans-serif; transition:transform .28s cubic-bezier(.2,.8,.2,1), box-shadow .28s; box-shadow:0 10px 26px -18px rgba(60,42,28,.5);" style-hover="transform:translateY(-4px); box-shadow:0 22px 42px -22px rgba(60,42,28,.55)" style-active="transform:translateY(-1px)">
-          <div style="position:relative; width:100%; aspect-ratio:4/5; border-radius:14px; overflow:hidden; background:var(--panel);">
-            <image-slot id="face-june" shape="rounded" radius="14" placeholder="portrait" style="width:100%; height:100%; display:block;"></image-slot>
-            <div style="{{ ring2Style }}"></div>
-            <sc-if value="{{ sel2 }}"><div style="position:absolute; top:10px; right:10px; width:26px; height:26px; border-radius:50%; background:var(--accent); color:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 10px rgba(0,0,0,.25); animation:softIn .25s ease;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"></path></svg></div></sc-if>
-          </div>
-          <div style="display:flex; flex-direction:column; gap:5px; padding:0 4px 6px;">
-            <div style="font-family:'Newsreader',serif; font-size:21px; color:var(--ink); line-height:1;">June</div>
-            <div style="font-size:10.5px; text-transform:uppercase; letter-spacing:.15em; color:var(--accent); font-weight:600;">Daily check-in</div>
-            <div style="font-size:13.5px; line-height:1.45; color:var(--ink-soft); margin-top:2px;">A calm few minutes to land your day &mdash; morning or night.</div>
-          </div>
-        </button>
+        </sc-for>
+        </sc-if>
+        <sc-if value="{{ !hasPersonas }}">
+        <div style="color:var(--ink-faint); font-size:14.5px; padding:20px;">Loading voices&hellip;</div>
+        </sc-if>
       </div>
 
-      <button onClick="{{ startCall }}" style="display:inline-flex; align-items:center; gap:10px; background:var(--accent); color:#fff; border:none; font-family:'Hanken Grotesk',sans-serif; font-size:16px; font-weight:600; padding:15px 26px; border-radius:999px; cursor:pointer; box-shadow:0 14px 30px -10px var(--accent-deep); transition:all .2s;" style-hover="transform:translateY(-2px); box-shadow:0 18px 38px -10px var(--accent-deep)" style-active="transform:translateY(0) scale(.98)">
+      <button onClick="{{ startCall }}" disabled="{{ !hasPersonas }}" style="display:inline-flex; align-items:center; gap:10px; background:var(--accent); color:#fff; border:none; font-family:'Hanken Grotesk',sans-serif; font-size:16px; font-weight:600; padding:15px 26px; border-radius:999px; cursor:pointer; box-shadow:0 14px 30px -10px var(--accent-deep); transition:all .2s; opacity:{{ startOpacity }};" style-hover="transform:translateY(-2px); box-shadow:0 18px 38px -10px var(--accent-deep)" style-active="transform:translateY(0) scale(.98)">
         <span>{{ startLabel }}</span>
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M12.5 6l6 6-6 6"></path></svg>
       </button>
@@ -96,7 +74,7 @@ body{background:#F3EEE6}
   <sc-if value="{{ isConnecting }}">
   <div style="min-height:100vh; width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:26px; animation:softIn .5s ease;">
     <div style="position:relative; width:132px; height:164px; border-radius:20px; overflow:hidden; background:var(--panel); box-shadow:var(--shadow);">
-      <image-slot id="{{ avatarFaceId }}" shape="rounded" radius="20" placeholder="avatar" style="width:100%; height:100%; display:block;"></image-slot>
+      <img src="{{ avatarUrl }}" style="width:100%; height:100%; object-fit:cover; display:block;" />
     </div>
     <div style="display:flex; flex-direction:column; align-items:center; gap:14px;">
       <div style="font-family:'Newsreader',serif; font-size:24px; color:var(--ink);">Connecting to {{ personaName }}</div>
@@ -129,7 +107,8 @@ body{background:#F3EEE6}
 
     <div style="flex:1 1 auto; display:flex; align-items:center; justify-content:center; padding:4px 34px 8px; min-height:0; transition:margin-right .38s cubic-bezier(.2,.8,.2,1); margin-right:{{ stageShift }};">
       <div style="position:relative; height:100%; max-height:min(72vh,700px); aspect-ratio:4/5; max-width:100%; border-radius:30px; overflow:hidden; background:var(--panel); box-shadow:var(--shadow);">
-        <image-slot id="{{ avatarFaceId }}" shape="rounded" radius="30" placeholder="avatar video" style="width:100%; height:100%; display:block;"></image-slot>
+        <img src="{{ avatarUrl }}" style="{{ avatarImgStyle }}" />
+        <video ref="{{ avatarVideoRef }}" playsinline style="{{ avatarVideoStyle }}"></video>
 
         <sc-if value="{{ showCaption }}">
         <div style="position:absolute; left:0; right:0; bottom:0; padding:80px 30px 28px; background:linear-gradient(to top, rgba(22,15,9,.66), rgba(22,15,9,.26) 55%, rgba(22,15,9,0)); display:flex; justify-content:center; pointer-events:none;">
@@ -142,11 +121,6 @@ body{background:#F3EEE6}
           </div>
         </div>
         </sc-if>
-
-        <button onClick="{{ replaceAvatar }}" title="Replace avatar image" style="position:absolute; top:16px; left:16px; z-index:2; display:inline-flex; align-items:center; gap:7px; padding:8px 13px; border-radius:999px; border:none; background:rgba(20,14,8,.40); color:#fff; font-family:'Hanken Grotesk',sans-serif; font-size:12.5px; font-weight:500; cursor:pointer; -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px); opacity:.9; transition:background .2s, opacity .2s;" style-hover="background:rgba(20,14,8,.62); opacity:1" style-active="transform:scale(.97)">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="m21 15-5-5L5 21"></path></svg>
-          <span>Replace</span>
-        </button>
       </div>
     </div>
 
@@ -168,22 +142,6 @@ body{background:#F3EEE6}
         </button>
       </div>
     </div>
-
-    <sc-if value="{{ showSelf }}">
-    <div id="self-tile" style="{{ selfTileStyle }}">
-      <image-slot id="self-view" shape="rounded" radius="16" placeholder="you" style="width:100%; height:100%; display:block;"></image-slot>
-      <div style="{{ selfRingStyle }}"></div>
-      <div onPointerDown="{{ selfDragStart }}" title="Drag to move" style="position:absolute; top:0; left:0; right:0; height:26px; display:flex; align-items:center; justify-content:center; gap:3px; cursor:grab; background:linear-gradient(to bottom, rgba(0,0,0,.42), rgba(0,0,0,0)); touch-action:none; z-index:2;">
-        <span style="width:4px; height:4px; border-radius:50%; background:rgba(255,255,255,.85);"></span>
-        <span style="width:4px; height:4px; border-radius:50%; background:rgba(255,255,255,.85);"></span>
-        <span style="width:4px; height:4px; border-radius:50%; background:rgba(255,255,255,.85);"></span>
-      </div>
-      <button onClick="{{ replaceSelf }}" title="Replace image" style="position:absolute; top:5px; right:5px; z-index:3; width:24px; height:24px; border-radius:50%; border:none; background:rgba(0,0,0,.5); color:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0;" style-hover="background:rgba(0,0,0,.72)">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="m21 15-5-5L5 21"></path></svg>
-      </button>
-      <sc-if value="{{ micMuted }}"><div style="position:absolute; left:8px; bottom:8px; z-index:2; width:24px; height:24px; border-radius:50%; background:var(--end); color:#fff; display:flex; align-items:center; justify-content:center;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="10" rx="3"></rect><path d="M6 11a6 6 0 0 0 12 0"></path><path d="M4 4l16 16"></path></svg></div></sc-if>
-    </div>
-    </sc-if>
 
     <sc-if value="{{ panelOpen }}">
     <div style="position:absolute; top:0; bottom:0; right:0; width:340px; background:var(--surface); border-left:1px solid var(--line); box-shadow:-24px 0 60px -30px rgba(0,0,0,.4); display:flex; flex-direction:column; z-index:3; animation:slideIn .35s ease;">
@@ -211,7 +169,7 @@ body{background:#F3EEE6}
   <div style="min-height:100vh; width:100%; display:flex; align-items:center; justify-content:center; padding:40px; animation:softIn .5s ease;">
     <div style="width:100%; max-width:440px; background:var(--surface); border:1px solid var(--line); border-radius:26px; padding:40px 38px; box-shadow:var(--shadow); display:flex; flex-direction:column; align-items:center; text-align:center; gap:18px;">
       <div style="position:relative; width:72px; height:72px; border-radius:50%; overflow:hidden; background:var(--panel); box-shadow:0 8px 20px -8px rgba(0,0,0,.35);">
-        <image-slot id="{{ avatarFaceId }}" shape="circle" placeholder="" style="width:100%; height:100%; display:block;"></image-slot>
+        <img src="{{ avatarUrl }}" style="width:100%; height:100%; object-fit:cover; display:block;" />
       </div>
       <div style="display:flex; flex-direction:column; gap:8px;">
         <div style="text-transform:uppercase; font-size:11px; letter-spacing:.22em; color:var(--accent); font-weight:600;">Call ended</div>
@@ -229,54 +187,79 @@ body{background:#F3EEE6}
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;defaultTheme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;'light' | 'dark'&quot;,&quot;section&quot;:&quot;Appearance&quot;},&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;options&quot;:[&quot;#C1674A&quot;,&quot;#7C8A5A&quot;,&quot;#C79A4E&quot;,&quot;#B5776F&quot;,&quot;#5E7C74&quot;],&quot;default&quot;:&quot;#C1674A&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Appearance&quot;},&quot;showSelfView&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Call&quot;},&quot;captionsDefault&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Call&quot;}}">
+// --- backend base URLs. Same resolution as the old index.html: localhost:8000
+// dev, Caddy HTTPS proxy (same-origin /stt /llm /tts /vid), or JarvisLabs
+// /proxy/<port> path scheme. Override via ?stt=..&llm=..&tts=..&vid=.. ---
+function resolveBackends(){
+  const q = new URLSearchParams(location.search);
+  let sttDef, llmDef, ttsDef, vidDef;
+  if (location.pathname.match(/^\/proxy\/\d+\//)) {
+    sttDef = location.origin + "/proxy/5001";
+    llmDef = "/proxy/5004";
+    ttsDef = "/proxy/5002";
+    vidDef = "/proxy/5003";
+  } else if (location.port === "8000") {
+    sttDef = "http://localhost:5001";
+    llmDef = "http://localhost:5004";
+    ttsDef = "http://localhost:5002";
+    vidDef = "http://localhost:5003";
+  } else {
+    sttDef = location.origin + "/stt";
+    llmDef = "/llm";
+    ttsDef = "/tts";
+    vidDef = "/vid";
+  }
+  return {
+    STT_WS: (q.get("stt") || sttDef).replace(/^http/, "ws"),
+    LLM: q.get("llm") || llmDef,
+    TTS: q.get("tts") || ttsDef,
+    VID: q.get("vid") || vidDef,
+  };
+}
+const BACKENDS = resolveBackends();
+const MSE_CODEC = 'video/mp4; codecs="avc1.42E01F, mp4a.40.2"';
+
+function toPCM16(f32) {
+  const out = new Int16Array(f32.length);
+  for (let i = 0; i < f32.length; i++) {
+    const s = Math.max(-1, Math.min(1, f32[i]));
+    out[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+  }
+  return out;
+}
+function downsample(buf, inRate, outRate) {
+  if (outRate === inRate) return buf;
+  const ratio = inRate / outRate, len = Math.round(buf.length / ratio);
+  const res = new Float32Array(len);
+  let o = 0, b = 0;
+  while (o < len) {
+    const next = Math.round((o + 1) * ratio);
+    let acc = 0, c = 0;
+    for (let i = b; i < next && i < buf.length; i++) { acc += buf[i]; c++; }
+    res[o++] = acc / (c || 1);
+    b = next;
+  }
+  return res;
+}
+
 class Component extends DCLogic {
   constructor(props){
     super(props);
     this.rootRef = React.createRef();
+    this.videoRef = React.createRef();
     this._timers = [];
-    this._typing = null;
     this._timer = null;
-    this._step = 0;
-    this._paused = false;
-    this._script = [];
-    this.personas = [
-      { key:'maya', name:'Maya',
-        lines:[
-          "Hey \u2014 it's good to see you. How's your day been so far?",
-          "That sounds like a lot to be holding. Which part is sitting heaviest right now?",
-          "Okay. Let's stay with that for a moment \u2014 there's no rush here."
-        ],
-        you:[
-          "Honestly, a little scattered. Work's been relentless this week.",
-          "I think it's the feeling that I'm never quite caught up."
-        ] },
-      { key:'theo', name:'Theo',
-        lines:[
-          "\u00A1Hola! It's so good to see you. Shall we start slow, in Spanish?",
-          "Perfecto. Tell me \u2014 \u00BFqu\u00E9 hiciste hoy? What did you do today?",
-          "Muy bien. Don't worry about the mistakes \u2014 I'll catch you."
-        ],
-        you:[
-          "S\u00ED, vale. Um\u2026 hoy yo\u2026 trabaj\u00E9 mucho?",
-          "I went for a walk this morning \u2014 un paseo, right?"
-        ] },
-      { key:'june', name:'June',
-        lines:[
-          "Morning. Before anything else \u2014 take one slow breath with me.",
-          "Good. Now, what's the one thing you're carrying into today?",
-          "Thank you for telling me. Let's set it down together for a minute."
-        ],
-        you:[
-          "Okay\u2026 breathing. That already helps a little.",
-          "A big presentation this afternoon. I'm nervous about it."
-        ] },
-    ];
+    this._audioCtx = null; this._processor = null; this._source = null; this._stream = null; this._socket = null;
+    this._muted = false;    // true while the persona thinks/speaks (mic frames dropped)
+    this._transcript = "";  // latest final STT transcript, consumed on [[END]]
+    this._idleUrls = {};    // persona id -> cached idle-loop object URL
     this.themes = {
       light:{'--bg':'#F3EEE6','--bg2':'#EBE4D8','--surface':'#FBF8F2','--ink':'#2C2823','--ink-soft':'#6E655B','--ink-faint':'#A79D8F','--line':'#E4DCCF','--accent':'#C1674A','--accent-deep':'#A9543B','--end':'#B0473A','--panel':'#E4DACC','--glow':'#F8F4EE','--shadow':'0 42px 84px -34px rgba(58,42,28,0.42), 0 14px 34px -16px rgba(58,42,28,0.20)'},
       dark:{'--bg':'#221F1B','--bg2':'#1A1815','--surface':'#2C2823','--ink':'#F0EADF','--ink-soft':'#B2A899','--ink-faint':'#7C7365','--line':'#39342D','--accent':'#D07A5C','--accent-deep':'#BE6849','--end':'#C4584A','--panel':'#141311','--glow':'#2A2722','--shadow':'0 46px 94px -34px rgba(0,0,0,0.66), 0 14px 34px -16px rgba(0,0,0,0.5)'},
     };
     this.state = {
       screen:'landing',
+      personas:[],
       personaIndex:0,
       theme: this.props.defaultTheme==='dark' ? 'dark' : 'light',
       micOn:true,
@@ -287,11 +270,11 @@ class Component extends DCLogic {
       currentText:'',
       turns:[],
       seconds:0,
-      selfPos:null,
+      videoActive:false,
     };
   }
 
-  componentDidMount(){ this.applyTheme(); }
+  componentDidMount(){ this.applyTheme(); this.fetchPersonas(); }
   componentDidUpdate(prevProps, prevState){
     if(prevProps.defaultTheme!==this.props.defaultTheme){
       this.setState({ theme: this.props.defaultTheme==='dark' ? 'dark' : 'light' }, this.applyTheme.bind(this));
@@ -303,11 +286,10 @@ class Component extends DCLogic {
       this.applyTheme();
     }
   }
-  componentWillUnmount(){ this.clearAll(); }
+  componentWillUnmount(){ this.clearAll(); this.teardownAudio(); }
 
   clearAll(){
     this._timers.forEach(clearTimeout); this._timers=[];
-    if(this._typing){ clearTimeout(this._typing); this._typing=null; }
     if(this._timer){ clearInterval(this._timer); this._timer=null; }
   }
   after(ms, fn){ const id=setTimeout(fn, ms); this._timers.push(id); return id; }
@@ -331,123 +313,220 @@ class Component extends DCLogic {
     }
   }
 
+  // --- persona roster (curated: whatever personas/<id>/ folders vid_gen finds) ---
+  async fetchPersonas(){
+    try {
+      const r = await fetch(BACKENDS.VID + "/personas");
+      const list = await r.json();
+      if (!Array.isArray(list) || !list.length) return;
+      this.setState({ personas: list.map(function(p){
+        return { id: p.id, name: p.name, avatarUrl: "/personas/" + p.id + "/avatar.jpg" };
+      }) });
+    } catch(e) { /* vid_gen not up yet - roster stays empty, start button disabled */ }
+  }
+  currentPersona(){
+    return this.state.personas[this.state.personaIndex] || this.state.personas[0] || { id:null, name:'\u2026', avatarUrl:'' };
+  }
   selectPersona(i){ if(this.state.screen!=='landing') return; this.setState({ personaIndex:i }); }
   toggleTheme(){ this.setState(function(s){ return { theme: s.theme==='dark'?'light':'dark' }; }, this.applyTheme.bind(this)); }
 
+  // --- call lifecycle ---
   startCall(){
+    if (!this.state.personas.length) return;
     this.clearAll();
     this.setState({ screen:'connecting' });
-    this.after(1350, this.enterCall.bind(this));
+    this.beginAudio();
+  }
+  async beginAudio(){
+    try {
+      this._stream = await navigator.mediaDevices.getUserMedia({ audio:true });
+    } catch(e) {
+      this.setState({ screen:'landing' });
+      return;
+    }
+    this._audioCtx = new AudioContext();
+    this._socket = new WebSocket(BACKENDS.STT_WS + "/ws");
+    this._socket.binaryType = "arraybuffer";
+    const self = this;
+    this._socket.onmessage = function(e){ self.handleSTT(e); };
+    this._socket.onerror = function(){ /* surfaced as stalled 'connecting' state - user can End/retry */ };
+    this._socket.onopen = function(){
+      self._source = self._audioCtx.createMediaStreamSource(self._stream);
+      self._processor = self._audioCtx.createScriptProcessor(4096, 1, 1);
+      self._processor.onaudioprocess = function(e){
+        if (self._muted || self._socket.readyState !== WebSocket.OPEN) return;
+        const pcm = toPCM16(downsample(e.inputBuffer.getChannelData(0), self._audioCtx.sampleRate, 16000));
+        self._socket.send(pcm.buffer);
+      };
+      self._source.connect(self._processor);
+      self._processor.connect(self._audioCtx.destination); // silent - no output written
+      self.enterCall();
+    };
   }
   enterCall(){
-    const p = this.personas[this.state.personaIndex];
-    this._script = [
-      {t:'avatar', x:p.lines[0]},
-      {t:'listen'},
-      {t:'you', x:p.you[0]},
-      {t:'avatar', x:p.lines[1]},
-      {t:'listen'},
-      {t:'you', x:p.you[1]},
-      {t:'avatar', x:p.lines[2]},
-      {t:'end'},
-    ];
-    this._step = 0; this._paused = false;
-    this.setState({ screen:'call', phase:'idle', currentSpeaker:null, currentText:'', turns:[], seconds:0, panelOpen:false });
+    this.setState({ screen:'call', phase:'listening', currentSpeaker:null, currentText:'', turns:[], seconds:0, panelOpen:false, videoActive:false });
     if(this._timer) clearInterval(this._timer);
     this._timer = setInterval(function(){ this.setState(function(s){ return { seconds:s.seconds+1 }; }); }.bind(this), 1000);
-    this.after(800, this.runStep.bind(this));
+    this.playIdle();
   }
-  runStep(){
-    if(this.state.screen!=='call') return;
-    if(!this.state.micOn){ this._paused = true; return; }
-    this._paused = false;
-    const step = this._script[this._step];
-    if(!step){ this.setState({ phase:'idle' }); return; }
-    const self = this;
-    if(step.t==='avatar'){
-      this.setState({ phase:'speaking', currentSpeaker:'avatar' });
-      this.typeText(step.x, 'avatar', function(){ self.pushTurn('avatar', step.x); self._step++; self.after(650, self.runStep.bind(self)); });
-    } else if(step.t==='listen'){
-      this.setState({ phase:'listening', currentSpeaker:null, currentText:'' });
-      this._step++; this.after(1250, this.runStep.bind(this));
-    } else if(step.t==='you'){
-      this.setState({ phase:'listening', currentSpeaker:'you' });
-      this.typeText(step.x, 'you', function(){ self.pushTurn('you', step.x); self._step++; self.after(600, self.runStep.bind(self)); });
-    } else {
-      this.setState({ phase:'idle' });
-    }
+
+  handleSTT(e){
+    if (typeof e.data !== "string") return;             // ignore stray binary frames
+    if (e.data === "[[END]]") { this.turnEnd(); return; } // turn detected (Silero VAD)
+    if (e.data === "[[S]]") { this.setState({ currentSpeaker:'you', currentText:'\u2026' }); return; }
+    if (e.data.indexOf("[[P]]")===0) { this.setState({ currentSpeaker:'you', currentText:e.data.slice(5) }); return; }
+    this._transcript = e.data;                           // final utterance transcript
+    this.setState({ currentSpeaker:'you', currentText:e.data });
+  }
+
+  // one conversational turn: transcript is in, get the persona's reply and speak it
+  async turnEnd(){
+    if (this.state.screen!=='call') return;
+    this._muted = true;                                  // don't let the persona hear itself
+    const userText = this._transcript.trim();
+    this._transcript = "";
+    if (!userText) { this.setState({ currentSpeaker:null, currentText:'' }); this._muted=false; return; }
+    this.pushTurn('you', userText);
+    this.setState({ phase:'idle', currentSpeaker:null, currentText:'' });
+
+    const persona = this.currentPersona();
+    const answer = await this.askLLM(userText, persona.id);
+    if (this.state.screen!=='call') return;
+    this.pushTurn('avatar', answer);
+    this.setState({ phase:'speaking', currentSpeaker:'avatar', currentText:answer });
+
+    try {
+      const wav = await this.fetchTTS(answer, persona.id);
+      if (this.state.screen==='call') await this.playAvatarVideo(wav, persona.id);
+    } catch(e) { /* TTS/video failed - fall through to just listening again */ }
+    this._muted = false;
+    if (this.state.screen==='call') this.setState({ phase:'listening', currentSpeaker:null, currentText:'' });
   }
   pushTurn(speaker, text){ this.setState(function(s){ return { turns: s.turns.concat([{speaker:speaker, text:text}]) }; }); }
 
-  typeText(text, speaker, done){
-    if(this._typing){ clearTimeout(this._typing); }
-    this.setState({ currentSpeaker:speaker, currentText:'' });
-    let i = 0;
+  async askLLM(text, personaId){
+    try {
+      const r = await fetch(BACKENDS.LLM + "/chat", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body: JSON.stringify({ text:text, persona:personaId }),
+      });
+      return (await r.json()).reply || "\u2026";
+    } catch(e) { return "You said: " + text; } // LLM offline - echo
+  }
+  async fetchTTS(text, personaId){
+    const r = await fetch(BACKENDS.TTS + "/tts", {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ text:text, persona:personaId }),
+    });
+    if (!r.ok) throw new Error("TTS " + r.status);
+    return await r.blob();
+  }
+
+  // Ditto full-face video. Preferred path: fragmented mp4 streamed while
+  // frames are generated, played live via MediaSource. Falls back to
+  // whole-file mp4; voice keeps playing through the <video> either way.
+  async playAvatarVideo(wav, personaId){
+    const vid = this.videoRef.current;
+    if (!vid) return;
+    if (window.MediaSource && MediaSource.isTypeSupported(MSE_CODEC)) {
+      if (await this.playVideoStream(vid, wav, personaId)) return;
+    }
+    await this.playVideoBlob(vid, wav, personaId);
+  }
+  playVideoStream(vid, wav, personaId){
     const self = this;
-    const step = function(){
-      i++;
-      self.setState({ currentText: text.slice(0,i) });
-      if(i < text.length){
-        const ch = text[i-1];
-        const d = /[.,!?\u2026]/.test(ch) ? 150 : (ch===' ' ? 34 : 22);
-        self._typing = setTimeout(step, d);
-      } else {
-        self._typing = null;
-        if(done) self.after(420, done);
-      }
+    return new Promise(async function(resolve){
+      try {
+        const r = await fetch(BACKENDS.VID + "/generate_stream?persona=" + encodeURIComponent(personaId), {
+          method:"POST", headers:{"Content-Type":"audio/wav"}, body: wav,
+        });
+        if (!r.ok || !r.body) { resolve(false); return; }
+        const reader = r.body.getReader();
+        const ms = new MediaSource();
+        vid.loop = false; vid.muted = false;
+        vid.src = URL.createObjectURL(ms);
+        await new Promise(function(res){ ms.addEventListener("sourceopen", res, { once:true }); });
+        const sb = ms.addSourceBuffer(MSE_CODEC);
+        const idle = function(){ return new Promise(function(res){ if(!sb.updating) return res(); sb.addEventListener("updateend", res, { once:true }); }); };
+        let started = false;
+        vid.onended = function(){ self.setState({ videoActive:false }); self.playIdle(); resolve(true); };
+        vid.onerror = function(){ if(!started) resolve(false); else { self.setState({ videoActive:false }); self.playIdle(); resolve(true); } };
+        while (true) {
+          const chunk = await reader.read();
+          if (chunk.done) break;
+          await idle();
+          sb.appendBuffer(chunk.value);
+          if (!started) {
+            started = true;
+            vid.play().then(function(){ self.setState({ videoActive:true }); }).catch(function(){ resolve(false); });
+          }
+        }
+        await idle();
+        if (ms.readyState==="open") ms.endOfStream();
+        if (!started) resolve(false);
+      } catch(e) { resolve(false); }
+    });
+  }
+  async playVideoBlob(vid, wav, personaId){
+    const self = this;
+    try {
+      const r = await fetch(BACKENDS.VID + "/generate?persona=" + encodeURIComponent(personaId), {
+        method:"POST", headers:{"Content-Type":"audio/wav"}, body: wav,
+      });
+      if (!r.ok) return;
+      const mp4 = await r.blob();
+      await new Promise(function(resolve){
+        vid.loop = false; vid.muted = false;
+        vid.src = URL.createObjectURL(mp4);
+        vid.onplay = function(){ self.setState({ videoActive:true }); };
+        vid.onended = function(){ self.setState({ videoActive:false }); self.playIdle(); resolve(); };
+        vid.onerror = function(){ self.setState({ videoActive:false }); self.playIdle(); resolve(); };
+        vid.play().catch(function(){ self.playIdle(); resolve(); });
+      });
+    } catch(e) { /* voice already played via the persona's text/turn; video just stays idle */ }
+  }
+  playIdle(){
+    const vid = this.videoRef.current;
+    if (!vid) return;
+    const persona = this.currentPersona();
+    const self = this;
+    const setSrc = function(url){
+      vid.onended = null; vid.onerror = null;
+      vid.src = url; vid.loop = true; vid.muted = true;
+      vid.play().then(function(){ self.setState({ videoActive:true }); }).catch(function(){});
     };
-    this._typing = setTimeout(step, 150);
+    if (this._idleUrls[persona.id]) { setSrc(this._idleUrls[persona.id]); return; }
+    fetch(BACKENDS.VID + "/idle?persona=" + encodeURIComponent(persona.id))
+      .then(function(r){ return r.ok ? r.blob() : null; })
+      .then(function(blob){
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        self._idleUrls[persona.id] = url;
+        setSrc(url);
+      }).catch(function(){});
   }
 
   toggleMic(){
     const self = this;
     this.setState(function(s){ return { micOn: !s.micOn }; }, function(){
-      if(!self.state.micOn){
-        if(self._typing){ clearTimeout(self._typing); self._typing=null; }
-      } else {
-        if(self._paused){ self._paused=false; self.runStep(); }
-      }
+      self._muted = !self.state.micOn;
     });
   }
   toggleCaptions(){ this.setState(function(s){ return { captions: !s.captions }; }); }
-  togglePanel(){
-    const self = this;
-    this.setState(function(s){ return { panelOpen: !s.panelOpen }; }, function(){
-      const p = self.state.selfPos; if(!p) return;
-      const pw = self.state.panelOpen ? 340 : 0;
-      const maxX = window.innerWidth - pw - 110 - 14;
-      if(p.x > maxX) self.setState({ selfPos:{ x:Math.max(14, maxX), y:p.y } });
-    });
+  togglePanel(){ this.setState(function(s){ return { panelOpen: !s.panelOpen }; }); }
+
+  teardownAudio(){
+    if (this._processor) { try{ this._processor.disconnect(); }catch(e){} }
+    if (this._source) { try{ this._source.disconnect(); }catch(e){} }
+    if (this._audioCtx) { try{ this._audioCtx.close(); }catch(e){} }
+    if (this._stream) { this._stream.getTracks().forEach(function(t){ t.stop(); }); }
+    if (this._socket) { try{ this._socket.close(); }catch(e){} }
+    this._audioCtx=null; this._processor=null; this._source=null; this._stream=null; this._socket=null;
+    this._transcript=""; this._muted=false;
   }
-  selfDragStart(e){
-    if(e.button!=null && e.button!==0) return;
-    e.preventDefault();
-    const self = this, tileW=110, tileH=148, margin=14, topMin=72;
-    const pw0 = this.state.panelOpen ? 340 : 0;
-    const cur = this.state.selfPos || { x: window.innerWidth - pw0 - tileW - 28, y: window.innerHeight - tileH - 44 };
-    const startX = e.clientX, startY = e.clientY, origX = cur.x, origY = cur.y;
-    const onMove = function(ev){
-      const pw = self.state.panelOpen ? 340 : 0;
-      const maxX = window.innerWidth - pw - tileW - margin;
-      const maxY = window.innerHeight - tileH - margin;
-      const nx = Math.max(margin, Math.min(maxX, origX + (ev.clientX - startX)));
-      const ny = Math.max(topMin, Math.min(maxY, origY + (ev.clientY - startY)));
-      self.setState({ selfPos:{ x:nx, y:ny } });
-    };
-    const onUp = function(){
-      document.removeEventListener('pointermove', onMove);
-      document.removeEventListener('pointerup', onUp);
-    };
-    document.addEventListener('pointermove', onMove);
-    document.addEventListener('pointerup', onUp);
-  }
-  replaceImage(id){
-    const el = document.getElementById(id);
-    if(el && el.shadowRoot){ const inp = el.shadowRoot.querySelector('input[type=file]'); if(inp) inp.click(); }
-  }
-  endCall(){ if(this._timer){ clearInterval(this._timer); this._timer=null; } this.clearAll(); this.setState({ screen:'ended' }); }
-  restart(){ this.enterCall(); }
-  goHome(){ this.clearAll(); if(this._timer){ clearInterval(this._timer); this._timer=null; } this.setState({ screen:'landing', phase:'idle', currentText:'', currentSpeaker:null, turns:[], seconds:0, panelOpen:false }); }
+  endCall(){ if(this._timer){ clearInterval(this._timer); this._timer=null; } this.clearAll(); this.teardownAudio(); this.setState({ screen:'ended' }); }
+  restart(){ this.setState({ screen:'connecting' }); this.beginAudio(); }
+  goHome(){ this.clearAll(); this.teardownAudio(); this.setState({ screen:'landing', phase:'idle', currentText:'', currentSpeaker:null, turns:[], seconds:0, panelOpen:false }); }
 
   fmt(s){ const m=Math.floor(s/60), ss=s%60; return m+':'+(ss<10?'0':'')+ss; }
   ring(i){
@@ -457,9 +536,8 @@ class Component extends DCLogic {
 
   renderVals(){
     const S = this.state;
-    const p = this.personas[S.personaIndex] || this.personas[0];
+    const p = this.currentPersona();
     const active = S.phase==='listening' || S.phase==='speaking';
-    const listening = S.micOn && S.phase==='listening';
     const base48 = { width:'48px', height:'48px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', transition:'all .2s ease', border:'none', flex:'0 0 auto', padding:0 };
     const micBase = { width:'66px', height:'66px', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', transition:'all .2s ease', position:'relative', flex:'0 0 auto', padding:0 };
     let statusText;
@@ -471,15 +549,19 @@ class Component extends DCLogic {
     return {
       rootRef: this.rootRef,
       isLanding: S.screen==='landing', isConnecting: S.screen==='connecting', isCall: S.screen==='call', isEnded: S.screen==='ended',
-      personaName: p.name, avatarFaceId: 'face-'+p.key,
+      personaName: p.name, avatarUrl: p.avatarUrl,
 
-      sel0: S.personaIndex===0, sel1: S.personaIndex===1, sel2: S.personaIndex===2,
-      ring0Style: this.ring(0), ring1Style: this.ring(1), ring2Style: this.ring(2),
-      onSel0: function(){ this.selectPersona(0); }.bind(this),
-      onSel1: function(){ this.selectPersona(1); }.bind(this),
-      onSel2: function(){ this.selectPersona(2); }.bind(this),
+      hasPersonas: S.personas.length>0,
+      personasView: S.personas.map(function(persona, i){
+        return {
+          id: persona.id, name: persona.name, avatarUrl: persona.avatarUrl,
+          selected: S.personaIndex===i, ringStyle: this.ring(i),
+          onSelect: this.selectPersona.bind(this, i),
+        };
+      }.bind(this)),
       startCall: this.startCall.bind(this),
-      startLabel: 'Start with ' + p.name,
+      startLabel: S.personas.length ? ('Start with ' + p.name) : 'Loading voices\u2026',
+      startOpacity: S.personas.length ? 1 : 0.5,
       toggleTheme: this.toggleTheme.bind(this),
 
       statusText: statusText, timeStr: this.fmt(S.seconds),
@@ -489,14 +571,11 @@ class Component extends DCLogic {
       captionSpeaker: S.currentSpeaker==='you' ? 'You' : p.name,
       currentText: S.currentText,
       avatarSpeaking: S.micOn && S.phase==='speaking' && S.currentSpeaker==='avatar',
-      showSelf: this.props.showSelfView!==false,
+      avatarImgStyle: { position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', display: S.videoActive ? 'none' : 'block' },
+      avatarVideoRef: this.videoRef,
+      avatarVideoStyle: { position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', display: S.videoActive ? 'block' : 'none' },
       micMuted: !S.micOn, micOn: S.micOn, panelOpen: S.panelOpen,
-      selfRingStyle: { position:'absolute', inset:0, borderRadius:'16px', transition:'box-shadow .25s', pointerEvents:'none', boxShadow: listening ? '0 0 0 2.5px var(--accent)' : 'inset 0 0 0 1px rgba(255,255,255,.28)' },
-      selfTileStyle: (function(){ const b = { position:'absolute', width:'110px', height:'148px', borderRadius:'16px', overflow:'hidden', background:'var(--panel)', boxShadow:'0 16px 38px -12px rgba(0,0,0,.55)', zIndex:8, touchAction:'none' }; if(S.selfPos){ b.left = S.selfPos.x+'px'; b.top = S.selfPos.y+'px'; } else { b.right = (S.panelOpen?368:28)+'px'; b.bottom = '44px'; } return b; })(),
-      selfDragStart: this.selfDragStart.bind(this),
-      replaceAvatar: this.replaceImage.bind(this, 'face-'+p.key),
-      replaceSelf: this.replaceImage.bind(this, 'self-view'),
-      ringPulseStyle: { position:'absolute', inset:'-5px', borderRadius:'50%', border:'2px solid var(--accent)', pointerEvents:'none', display: listening ? 'block' : 'none', animation:'ringPulse 1.7s ease-out infinite' },
+      ringPulseStyle: { position:'absolute', inset:'-5px', borderRadius:'50%', border:'2px solid var(--accent)', pointerEvents:'none', display: (S.micOn && S.phase==='listening') ? 'block' : 'none', animation:'ringPulse 1.7s ease-out infinite' },
       micBtnStyle: S.micOn
         ? Object.assign({}, micBase, { background:'var(--accent)', color:'#fff', border:'none', boxShadow:'0 12px 26px -8px var(--accent-deep)' })
         : Object.assign({}, micBase, { background:'var(--bg)', color:'var(--end)', border:'1.5px solid var(--end)', boxShadow:'none' }),

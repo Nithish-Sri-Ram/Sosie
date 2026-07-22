@@ -1,14 +1,21 @@
 """Sosie TTS - CosyVoice2-0.5B over HTTP.
 
-POST /tts  {"text": "..."}  -> audio/wav
+POST /tts  {"text": "...", "persona": "elon"}  -> audio/wav
 GET  /health
 Runs on http://localhost:5002
 
 Setup (see README.md): clone CosyVoice into ./CosyVoice, download the
 CosyVoice2-0.5B weights, and drop a short reference clip at ./assets/prompt.wav.
 Prefers Apple MPS, falls back to CPU; uses CUDA automatically on a GPU box.
+
+Voice reference (prompt wav + its transcript) is resolved per-request from
+personas/<id>/{voice.wav,persona.json's voice_text}, falling back to the
+PROMPT_WAV/PROMPT_TEXT .env pair when a persona isn't found - CosyVoice2's
+zero-shot cloning takes the prompt path/text per call, so no model reload
+is needed to switch voices.
 """
 import io
+import json
 import os
 import sys
 
@@ -45,6 +52,20 @@ PROMPT_WAV = os.getenv(
     "PROMPT_WAV", os.path.join(os.path.dirname(__file__), "assets", "prompt.wav")
 )
 PROMPT_TEXT = os.getenv("PROMPT_TEXT", "Hello, this is a reference voice sample.")
+PERSONAS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "personas")
+
+
+def voice_ref(persona_id):
+    """(prompt_wav_path, prompt_text) for personas/<id>, falling back to .env's default."""
+    pdir = os.path.join(PERSONAS_DIR, persona_id or "")
+    wav = os.path.join(pdir, "voice.wav")
+    try:
+        with open(os.path.join(pdir, "persona.json")) as f:
+            text = json.load(f)["voice_text"]
+    except (OSError, KeyError, json.JSONDecodeError):
+        return PROMPT_WAV, PROMPT_TEXT
+    return (wav if os.path.exists(wav) else PROMPT_WAV), text
+
 
 app = Flask(__name__)
 CORS(app)
@@ -58,13 +79,15 @@ print("TTS ready.")
 
 @app.post("/tts")
 def tts():
-    text = (request.get_json(silent=True) or {}).get("text", "").strip()
+    body = request.get_json(silent=True) or {}
+    text = body.get("text", "").strip()
     if not text:
         return jsonify(error="missing 'text'"), 400
+    prompt_wav, prompt_text = voice_ref(body.get("persona"))
     chunks = [
         out["tts_speech"]
         for out in cosyvoice.inference_zero_shot(
-            text, PROMPT_TEXT, PROMPT_WAV, stream=False
+            text, prompt_text, prompt_wav, stream=False
         )
     ]
     audio = torch.cat(chunks, dim=1).cpu()

@@ -11,9 +11,9 @@ python stt/server.py > logs/stt.log 2>&1 & echo "STT  http://localhost:5001  (lo
 python llm/server.py > logs/llm.log 2>&1 & echo "LLM  http://localhost:5004  (logs/llm.log)"
 python tts/server.py > logs/tts.log 2>&1 & echo "TTS  http://localhost:5002  (logs/tts.log)"
 python serve.py      > logs/ui.log  2>&1 & echo "UI   http://localhost:8000  (logs/ui.log)"
-# vid_gen (MuseTalk) has its own venv - only start it if that env was set up
-if [ -x vid_gen/.venv/bin/python ]; then
-  vid_gen/.venv/bin/python vid_gen/server.py > logs/vid.log 2>&1 & echo "VID  http://localhost:5003  (logs/vid.log)"
+# vid_gen (Ditto) has its own venv - only start it if that env was set up
+if [ -x vid_gen/ditto/repo/.venv/bin/python ]; then
+  vid_gen/ditto/repo/.venv/bin/python vid_gen/server.py > logs/vid.log 2>&1 & echo "VID  http://localhost:5003  (logs/vid.log)"
 fi
 if command -v caddy > /dev/null; then
   caddy run --config Caddyfile > logs/caddy.log 2>&1 & echo "HTTPS https://<this-ip>:8443  (logs/caddy.log)"
