@@ -67,6 +67,17 @@ def voice_ref(persona_id):
     return (wav if os.path.exists(wav) else PROMPT_WAV), text
 
 
+# Import Sosie AudioSeal watermarker wrapper
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+try:
+    from audioseal_wrapper import get_watermarker, tensor_to_wav_bytes, wav_bytes_to_tensor
+    watermarker = get_watermarker()
+    print("AudioSeal Watermarker initialized in TTS service.")
+except Exception as e:
+    from audioseal_wrapper.watermarker import tensor_to_wav_bytes, wav_bytes_to_tensor
+    watermarker = None
+    print(f"Warning: AudioSeal watermarker not initialized ({e}). Serving raw unwatermarked TTS.")
+
 app = Flask(__name__)
 CORS(app)
 
@@ -79,11 +90,12 @@ print("TTS ready.")
 
 @app.post("/tts")
 def tts():
-    body = request.get_json(silent=True) or {}
-    text = body.get("text", "").strip()
+    req_json = request.get_json(silent=True) or {}
+    text = req_json.get("text", "").strip()
+    enable_wm = req_json.get("watermark", True)
     if not text:
         return jsonify(error="missing 'text'"), 400
-    prompt_wav, prompt_text = voice_ref(body.get("persona"))
+    prompt_wav, prompt_text = voice_ref(req_json.get("persona"))
     chunks = [
         out["tts_speech"]
         for out in cosyvoice.inference_zero_shot(
@@ -91,16 +103,38 @@ def tts():
         )
     ]
     audio = torch.cat(chunks, dim=1).cpu()
-    buf = io.BytesIO()
-    torchaudio.save(buf, audio, cosyvoice.sample_rate, format="wav")
-    buf.seek(0)
+
+    # Apply AudioSeal watermark to output audio tensor if enabled
+    if enable_wm and watermarker is not None:
+        try:
+            audio = watermarker.embed_watermark(
+                audio, sample_rate=cosyvoice.sample_rate, alpha=1.2
+            )
+        except Exception as e:
+            print(f"AudioSeal watermark embedding error: {e}")
+
+    buf = tensor_to_wav_bytes(audio, cosyvoice.sample_rate)
     return send_file(buf, mimetype="audio/wav")
+
+
+@app.post("/detect_watermark")
+def detect_watermark():
+    if watermarker is None:
+        return jsonify(error="AudioSeal watermarker is not active"), 503
+    if "audio" not in request.files:
+        return jsonify(error="missing audio file"), 400
+    
+    file = request.files["audio"]
+    wav, sr = wav_bytes_to_tensor(file)
+    res = watermarker.detect_watermark(wav, sample_rate=sr)
+    return jsonify(res)
 
 
 @app.get("/health")
 def health():
-    return jsonify(status="ok")
+    return jsonify(status="ok", watermarking_active=watermarker is not None)
 
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5002)))
+
