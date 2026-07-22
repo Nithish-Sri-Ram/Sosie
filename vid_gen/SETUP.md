@@ -1,42 +1,58 @@
-# vid_gen - MuseTalk (audio-driven lip sync)
+# vid_gen - Ditto (full-face audio-driven avatar)
 
-**CUDA / NVIDIA only.** Does not run on this Mac. Serves `POST /generate` -> mp4 on **:5003**.
+**CUDA / NVIDIA only.** Does not run on this Mac. Serves `POST /generate` and
+`POST /generate_stream` -> mp4 on **:5003**.
 
-## GPU sizing - do you need an L40 or A100?
-**No - neither is required for inference.** MuseTalk inference is light:
+Ditto (`antgroup/ditto-talkinghead`) generates full head motion and expression
+from a single reference image + audio - not just lip-sync onto a fixed driving
+video, which is what the old MuseTalk-based version did.
 
-| GPU | VRAM | Verdict for MuseTalk inference |
-|-----|------|--------------------------------|
-| T4 / RTX 3090 / A10 | 16-24 GB | yes enough; real-time-ish |
-| **L40 / L40S** | 48 GB | yes plenty, comfortable headroom |
-| **A100** | 40/80 GB | yes works, but overkill for inference |
+## GPU sizing
 
-Inference needs only **~8 GB VRAM**. Pick an **L40** if choosing between the two
-(cheaper, ample); reserve **A100** for when you're batching many streams or
-fine-tuning. A 16-24 GB card (T4/A10/4090) is the cheapest thing that works if
-you just want to validate the audio->video layer.
+Measured on an A30 (24 GB): ~2.6 GB VRAM peak, ~0.85x real-time with the
+prebuilt TensorRT engines - workable but not comfortable once STT+TTS share
+the card. On an A100 (80 GB): ~1.3x real-time, comfortable headroom. Any
+Ampere-or-newer card (A30/A100/RTX 30xx+) can use the prebuilt
+`ditto_trt_Ampere_Plus` engines directly; older GPUs need to rebuild the
+TensorRT engines from ONNX first (see the upstream repo's `cvt_onnx_to_trt.py`).
 
 ## Setup (on the GPU box)
+
 ```bash
+cd vid_gen
+git clone https://github.com/antgroup/ditto-talkinghead.git ditto/repo
+cd ditto/repo
+
 python -m venv .venv && source .venv/bin/activate
-git clone https://github.com/TMElyralab/MuseTalk.git   # server.py expects ./MuseTalk
 
-# torch matching your CUDA, then deps
-pip install torch==2.2.0 torchvision==0.17.0 torchaudio==2.2.0 \
-    --index-url https://download.pytorch.org/whl/cu121
-pip install -r requirements.txt
-pip install -r MuseTalk/requirements.txt
-# OpenMMLab for DWPose (version-sensitive - follow MuseTalk README exactly):
-pip install --no-cache-dir -U openmim && mim install mmengine "mmcv>=2.0.1" "mmdet>=3.1.0" "mmpose>=1.1.0"
+# torch matching your CUDA build first
+pip install torch==2.3.1 torchaudio==2.3.1 --index-url https://download.pytorch.org/whl/cu121
 
-# weights (sd-vae, whisper, dwpose, musetalk) - script in the repo
-cd MuseTalk && sh ./download_weights.sh && cd ..
+# tensorrt needs --no-build-isolation (its setup.py shells out to pip), and
+# cuda-python must stay on a 12.x release - 13.x dropped the flat
+# `from cuda import cuda, cudart, nvrtc` namespace this repo imports
+pip install tensorrt==8.6.1 --no-build-isolation --extra-index-url https://pypi.nvidia.com
+pip install cuda-python==12.6.0
+
+# the rest of Ditto's own deps, then the Flask server's
+pip install -r ../../requirements.txt   # flask, librosa, imageio-ffmpeg, etc.
+
+# checkpoints (~13 GB: onnx, TensorRT engines, pytorch weights) - see the
+# upstream README for the download link, unpack into ditto/repo/checkpoints/
 ```
 
+`ffmpeg` doesn't need to be on `PATH` - `server.py` resolves the bundled
+binary via `imageio_ffmpeg.get_ffmpeg_exe()`.
+
 ## Smoke test first (independent audio -> video)
+
 ```bash
 python smoke_test.py path/to/audio.wav   # times raw audio->video before wiring
 ```
-`server.py` wraps `scripts.realtime_inference`. You must point `MUSETALK_CONFIG`
-at a prepared avatar config and confirm the output naming matches what
-`server.py` looks for - adjust that one line to your config.
+
+## Avatars
+
+`server.py` reads `personas/<id>/avatar.jpg` per request (no pre-baking
+needed - registration is cheap, ~0.05-0.3s). Run with
+`vid_gen/ditto/repo/.venv/bin/python vid_gen/server.py` so it picks up
+Ditto's own venv rather than a shared one.

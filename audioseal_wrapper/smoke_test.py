@@ -38,7 +38,7 @@ def run_smoke_test():
     print(f"Detection after WAV buffer round-trip: {res_buffer}")
     assert res_buffer["is_watermarked"], "Expected loaded WAV buffer to remain watermarked"
 
-    print("\n✅ Sosie AudioSeal Integration Smoke Test PASSED SUCCESSFULLY!")
+    print("\nOK - Sosie AudioSeal smoke test passed.")
 
 
 if __name__ == "__main__":

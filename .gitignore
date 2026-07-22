@@ -12,6 +12,7 @@ __pycache__/
 
 # --- cloned upstream repos (huge, install locally per SETUP.md) ---
 tts/CosyVoice/
+vid_gen/ditto/repo/
 vid_gen/MuseTalk/
 
 # --- model weights ---
@@ -36,7 +37,7 @@ vid_gen/avatar_src/
 # (assets/elon_musk_sample.wav is force-tracked as the demo reference voice)
 **/assets/*.wav
 
-# --- tls (self-signed, regenerate per box — see Readme) ---
+# --- tls (self-signed, regenerate per box - see Readme) ---
 certs/
 
 # --- os ---

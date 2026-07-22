@@ -6,7 +6,7 @@
 #   https://<public-ip>:8443/stt/*  -> STT  :5001 (incl. the /ws websocket)
 #   https://<public-ip>:8443/llm/*  -> LLM  :5004
 #   https://<public-ip>:8443/tts/*  -> TTS  :5002
-#   https://<public-ip>:8443/vid/*  -> vid_gen (MuseTalk) :5003
+#   https://<public-ip>:8443/vid/*  -> vid_gen (Ditto) :5003
 #
 # Run: caddy run --config Caddyfile   (run_all.sh does this for you)
 

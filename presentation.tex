@@ -1,0 +1,182 @@
+% Compiles best with XeLaTeX or LuaLaTeX (Overleaf: Menu -> Compiler).
+% Falls back to Latin Modern under pdfLaTeX if those aren't available.
+\documentclass[11pt]{beamer}
+\usetheme{metropolis}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{amsmath}
+\usepackage[hidelinks]{hyperref}
+
+\title{Project Sosie}
+\subtitle{Real-Time Conversational AI Avatar}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\begin{frame}{Contents}
+  \setbeamertemplate{section in toc}[sections numbered]
+  \tableofcontents[hideallsubsections]
+\end{frame}
+
+\section{Overview}
+
+\begin{frame}{Real-time, zero-shot, secured}
+  Speak into your mic --- a live digital persona replies back with a cloned voice, a full-face lip-synced video, and built-in deepfake provenance protection.
+  \begin{itemize}
+    \item Zero-shot voice cloning
+    \item Live full-face avatar generation
+    \item AI watermarking on every clip
+    \item Config-driven persona roster
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{End-to-End Pipeline}
+  \[
+  \text{Mic input}
+  \rightarrow \text{STT (faster-whisper)}
+  \rightarrow \text{LLM (Groq \,$\cdot$\, Llama-3.1)}
+  \]
+  \[
+  \rightarrow \text{TTS (CosyVoice2)}
+  \rightarrow \text{AudioSeal watermark}
+  \rightarrow \text{Avatar (Ditto)}
+  \rightarrow \text{Web UI}
+  \]
+  \vspace{1em}
+  Each layer is smoke-tested independently before being wired into one live loop, so latency is isolated per component.
+\end{frame}
+
+\begin{frame}{Persona Roster}
+  Personas are config-driven, not hardcoded.
+  \begin{itemize}
+    \item Drop a folder into \texttt{personas/<id>/}: a system prompt, a reference photo, a reference voice clip.
+    \item The persona becomes selectable in the UI --- no code changes.
+    \item STT, LLM, TTS, and the avatar layer all resolve the same persona ID per request.
+  \end{itemize}
+\end{frame}
+
+\section{Architecture}
+
+\begin{frame}{Decoupled Microservices}
+  Every capability runs as an isolated service on its own port. If one layer stalls, the others keep running.
+  \begin{itemize}
+    \item \textbf{STT} --- faster-whisper + Silero VAD --- \texttt{:5001}
+    \item \textbf{LLM} --- Groq \,$\cdot$\, Llama-3.1-8b-instant --- \texttt{:5004}
+    \item \textbf{TTS} --- CosyVoice2-0.5B + AudioSeal watermark --- \texttt{:5002}
+    \item \textbf{Avatar} --- Ditto full-face generation, CUDA GPU --- \texttt{:5003}
+    \item \textbf{Web UI} --- MediaSource API --- \texttt{:8000} / \texttt{:8443}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Compute \& Resilience}
+  \begin{block}{Heterogeneous compute}
+    Local CPU / MPS for STT, LLM, TTS. Remote GPU (A30 / A100) for Ditto.
+  \end{block}
+  \begin{block}{Three-tier fallback}
+    \begin{enumerate}
+      \item Live A/V stream --- fragmented MP4
+      \item Whole-file MP4 render
+      \item Voice-only audio playback
+    \end{enumerate}
+  \end{block}
+\end{frame}
+
+\section{Speech \& Voice}
+
+\begin{frame}{Speech Recognition \& Zero-Shot Voice}
+  Detect the pause, understand the intent, then clone the voice --- instantly, from a short reference clip.
+  \begin{enumerate}
+    \item \textbf{Silero VAD.} Detects end of turn after $\sim$500\,ms of silence and triggers transcription --- no ``stop recording'' button.
+    \item \textbf{Groq \,$\cdot$\, Llama-3.1.} Generates a concise, persona-styled reply from the selected character's system prompt.
+    \item \textbf{CosyVoice2.} Clones the persona's voice from a reference clip; no fine-tuning required.
+  \end{enumerate}
+\end{frame}
+
+\section{AudioSeal Watermarking}
+
+\begin{frame}{Watermark Model}
+  An inaudible provenance signature is embedded into every generated clip so Sosie audio can always be verified as synthetic.
+  \begin{align*}
+    x(t) &\quad \text{clean speech} \\
+    \delta(t) &= G(x(t)) \quad \text{watermark signal} \\
+    \hat{x}(t) &= x(t) + \alpha \cdot G(x(t)), \qquad \alpha = 1.2
+  \end{align*}
+\end{frame}
+
+\begin{frame}[fragile]{Verification}
+  \texttt{POST /detect\_watermark} --- upload a WAV file, get a confidence score. $S > 0.5$ means the audio was made by Sosie.
+  \begin{itemize}
+    \item Inaudible --- no audible quality loss
+    \item Lightweight --- $\sim$350\,MB VRAM alongside the rest of the pipeline
+    \item Runs on GPU or CPU
+    \item Signed by default; opt-out is per-request
+  \end{itemize}
+\end{frame}
+
+\section{Live Avatar \& Network}
+
+\begin{frame}{Live Avatar Streaming}
+  \textbf{Ditto} (\texttt{:5003}, CUDA) generates full head motion and expression from a single reference photo plus audio --- not lip-sync onto a fixed driving video.
+  \begin{itemize}
+    \item Streams fragmented MP4 chunks live into the browser's MediaSource buffer
+    \item $\sim$0.85x real-time on an A30
+    \item $\sim$1.3x real-time on an A100
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Network Security}
+  \begin{itemize}
+    \item \textbf{Caddy HTTPS proxy} (\texttt{:8443}, HTTP/1.1 only) --- one SSL origin so \texttt{getUserMedia} works off localhost.
+    \item HTTP/1.1 is forced deliberately: tunneling WebSockets over HTTP/2 corrupts frame types in transit.
+    \item \texttt{./run\_all.sh} --- one command boots every service, logs to \texttt{./logs/}.
+  \end{itemize}
+\end{frame}
+
+\section{Commercial Use Cases}
+
+\begin{frame}{Where This Fits Commercially I}
+  \begin{itemize}
+    \item \textbf{Customer support \& contact centers.} A branded conversational avatar in front of an existing support LLM --- swap voice/face without retraining.
+    \item \textbf{Localization \& dubbing.} Re-voice content into another language while preserving the speaker's voice identity, from a short reference clip.
+    \item \textbf{Verified executive communications.} Earnings calls and public statements carry a checkable watermark --- proof a clip is genuine.
+    \item \textbf{Training \& tutoring.} One recognizable mentor persona answering live questions instead of reciting a fixed script.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Where This Fits Commercially II}
+  \begin{itemize}
+    \item \textbf{Accessibility \& voice preservation.} Voice banking for people at risk of losing natural speech --- needs only a short reference clip.
+    \item \textbf{Media, gaming \& virtual hosts.} Live-stream co-hosts and NPCs that respond in real time, not pre-rendered lines.
+    \item \textbf{Synthetic-media compliance.} As disclosure rules tighten (e.g.\ the EU AI Act), watermark-by-default generation becomes a buyer requirement, not a nice-to-have.
+  \end{itemize}
+\end{frame}
+
+\section{Limitations \& Roadmap}
+
+\begin{frame}{Current Constraints}
+  \begin{itemize}
+    \item Requires a CUDA GPU (Ampere or newer) for live avatar generation.
+    \item $\sim$500\,ms VAD pause before processing.
+    \item A30-class GPUs run Ditto close to real-time, not comfortably above it --- an A100 or better once STT and TTS share the card under load.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Roadmap}
+  \begin{itemize}
+    \item Sub-chunk frame streaming ($<$500\,ms latency)
+    \item Real-time emotional voice modulation
+    \item Compression-resistant watermark training
+    \item Expanding the persona roster --- config-only, no code changes
+  \end{itemize}
+\end{frame}
+
+\begin{frame}[standout]
+  Sosie --- real-time, zero-shot, and provably authentic.
+\end{frame}
+
+\end{document}
