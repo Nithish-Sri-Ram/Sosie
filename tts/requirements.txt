@@ -20,3 +20,4 @@ omegaconf
 inflect
 numpy
 scipy
+audioseal

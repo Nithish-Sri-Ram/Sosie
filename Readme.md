@@ -20,12 +20,40 @@ one loop - so latency is isolated per component, not debugged in a tangle.
 | STT - faster-whisper | `stt/` | 5001 | `WS /ws` (live) - `POST /transcribe` | CPU/int8 (no MPS in CTranslate2) |
 | LLM - Groq | `llm/` | 5004 | `POST /chat` | remote (needs `GROQ_API_KEY`) |
 | TTS - CosyVoice2-0.5B[1] | `tts/` | 5002 | `POST /tts` | MPS -> CPU |
+| AudioSeal watermarker | `audioseal_wrapper/` | — | embedded in TTS `/tts` + `POST /detect_watermark` | CPU / CUDA |
 | vid_gen - MuseTalk | `vid_gen/` | 5003 | `POST /generate` | CUDA only (GPU box) |
 | Voice UI | `index.html` | 8000 | served by `serve.py` | browser |
 
 [1] Swappable with Chatterbox-Turbo - same `POST /tts` contract, drop-in.
 
 Each layer has `server.py`, `requirements.txt`, and a standalone `smoke_test.py`.
+
+## AudioSeal — AI Audio Watermarking
+
+We integrated Meta's [AudioSeal](https://github.com/facebookresearch/audioseal) library
+to embed an invisible provenance watermark into every TTS-generated audio clip.
+
+**What was done:**
+
+1. Cloned `facebookresearch/audioseal` into `Sosie/audioseal/` (pip-installable via `pip install -e audioseal/`).
+2. Created `audioseal_wrapper/` — a thin Sosie-specific layer with:
+   - `watermarker.py` — `SosieWatermarker` class (embed + detect), `tensor_to_wav_bytes`, `wav_bytes_to_tensor` helpers.
+   - `__init__.py` — exposes `get_watermarker`, `tensor_to_wav_bytes`, `wav_bytes_to_tensor`.
+   - `smoke_test.py` — end-to-end test: generates a sine wave, embeds watermark, detects it, round-trips through WAV buffer.
+3. Modified `tts/server.py`:
+   - Watermark is automatically embedded by `embed_watermark(alpha=1.2)` after CosyVoice synthesis.
+   - Callers may opt out per-request: `{"text": "...", "watermark": false}`.
+   - New `POST /detect_watermark` endpoint (multipart WAV upload → JSON score).
+   - `GET /health` now reports `watermarking_active: true/false`.
+   - Graceful fallback: TTS still serves audio if `audioseal` is not installed.
+4. Set `NO_TORCH_COMPILE=1` in the wrapper to prevent Windows MSVC compile errors.
+
+Full details: see [`AUDIOSEAL_INTEGRATION.md`](AUDIOSEAL_INTEGRATION.md).
+
+Smoke-test the watermarker standalone:
+```bash
+python audioseal_wrapper/smoke_test.py
+```
 Heavy layers (`tts/`, `vid_gen/`) also have a `SETUP.md` (clone repo + weights).
 
 ## Secrets
@@ -105,18 +133,34 @@ then open http://localhost:8000.
 **L40** (ample, cheaper); save the **A100** for batching/fine-tuning. Full table
 in `vid_gen/SETUP.md`.
 
-## Status
+## Status / What we built
 
-- STT + LLM + TTS + vid_gen wired into `index.html` - persona: **Elon Musk**
-  (voice cloned from `assets/elon_musk_sample.wav`, persona prompt in
-  `llm/.env`). Verified end-to-end on the A30 GPU box.
-- STT does server-side turn detection (Silero VAD): speak, pause, Elon answers.
-- `vid_gen` (MuseTalk V1.5, own venv at `vid_gen/.venv`) lip-syncs the avatar
-  for each reply and streams it as fragmented mp4 while frames are still being
-  generated; the UI plays the stream live via MediaSource (playback starts a
-  few seconds in), falling back to whole-file mp4, then voice-only.
-- HTTPS reverse proxy (`Caddyfile`, :8443) so the mic works from any browser;
-  also reachable via the JarvisLabs port proxy (`/proxy/8000/`).
+### Core pipeline (verified end-to-end on A30 GPU box)
+
+- **STT** (`stt/`, :5001) — faster-whisper + Silero VAD for server-side turn detection.
+  Speak, pause; the turn is detected automatically and transcription is sent downstream.
+- **LLM** (`llm/`, :5004) — Groq-hosted Llama-3.1-8b-instant; persona set via `SOSIE_PERSONA` env var (default: Elon Musk).
+- **TTS** (`tts/`, :5002) — CosyVoice2-0.5B zero-shot voice clone; reference clip in `assets/elon_musk_sample.wav`.
+- **vid_gen** (`vid_gen/`, :5003) — MuseTalk V1.5 lip-sync; streams fragmented mp4 while frames are still rendering; UI plays live via MediaSource API with fallback to whole-file mp4, then voice-only.
+- **Voice UI** (`index.html`, :8000) — single-page mic UI; served by `serve.py`.
+- **HTTPS reverse proxy** (`Caddyfile`, :8443) — mic works from any browser, including JarvisLabs port proxy (`/proxy/8000/`).
+- **Orchestration** (`run_all.sh`) — launches all four services, logs to `./logs/`.
+
+### AudioSeal AI watermarking (this session)
+
+- Cloned `facebookresearch/audioseal` → `Sosie/audioseal/`
+- Created `audioseal_wrapper/` package:
+  - `watermarker.py` — `SosieWatermarker` class (embed + detect), WAV/tensor helpers
+  - `__init__.py` — public API exports
+  - `smoke_test.py` — standalone sanity test (embed → detect → WAV round-trip)
+- Modified `tts/server.py`:
+  - Watermark embedded after every CosyVoice synthesis (alpha=1.2, imperceptible)
+  - Per-request opt-out: `{"watermark": false}`
+  - New `POST /detect_watermark` endpoint
+  - `/health` reports `watermarking_active` flag
+  - Graceful degradation if `audioseal` not installed
+- Full integration doc: [`AUDIOSEAL_INTEGRATION.md`](AUDIOSEAL_INTEGRATION.md)
 
 ---
 *Team-1 - Sosie.*
+
